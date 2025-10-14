@@ -3,161 +3,592 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peta Interaktif - Login</title>
-    
-    <!-- Memuat Tailwind CSS untuk styling -->
+    <title>Aplikasi Manajemen Piket & Absensi Siswa</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Memuat Leaflet CSS dan JS untuk fungsionalitas peta -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
-
+    <!-- SheetJS (xlsx) CDN for Excel import/export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
-        /* Memastikan peta tidak terpotong dan memiliki bayangan yang bagus */
-        #map {
-            height: 600px;
-            border-radius: 0.75rem; /* 12px */
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            z-index: 0;
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-        /* Menggunakan font Inter yang modern */
-        body {
-            font-family: 'Inter', sans-serif;
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        /* Style for active tab */
+        .tab-active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
         }
     </style>
-     <link rel="preconnect" href="https://fonts.googleapis.com">
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased">
+<body class="bg-gray-900 text-gray-200 font-sans antialiased">
 
-    <!-- Kontainer Halaman Login -->
-    <div id="login-container" class="flex items-center justify-center min-h-screen">
-        <div class="w-full max-w-md p-8 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-            <h1 class="text-3xl font-bold text-center text-gray-900 dark:text-white">Login</h1>
-            <form id="login-form" class="space-y-6">
+    <!-- Login Page -->
+    <div id="loginPage" class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-gray-800 rounded-2xl shadow-xl p-8 space-y-6">
+            <div class="text-center">
+                <i class="fas fa-school fa-3x text-blue-500 mb-2"></i>
+                <h1 class="text-3xl font-bold text-white">Sistem Absensi Piket</h1>
+                <p class="text-gray-400">Silakan login untuk melanjutkan</p>
+            </div>
+            <form id="loginForm" class="space-y-4">
                 <div>
-                    <label for="username" class="text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
-                    <input id="username" name="username" type="text" required class="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                    <label for="username" class="block text-sm font-medium text-gray-300">Username</label>
+                    <input type="text" id="username" name="username" required
+                        class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
-                    <label for="password" class="text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
-                    <input id="password" name="password" type="password" required class="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                    <label for="password" class="block text-sm font-medium text-gray-300">Password</label>
+                    <input type="password" id="password" name="password" required
+                        class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                 </div>
-                <div>
-                    <label for="role" class="text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
-                    <select id="role" name="role" class="w-full px-3 py-2 mt-1 text-gray-900 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="user">User</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                </div>
-                <p id="error-message" class="text-sm text-red-500 hidden">Username atau password salah!</p>
-                <div>
-                    <button type="submit" class="w-full px-4 py-2 font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-800">
-                        Masuk
-                    </button>
-                </div>
+                <div id="loginError" class="text-red-400 text-sm hidden">Username atau password salah.</div>
+                <button type="submit"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500 transition-colors duration-200">
+                    Login
+                </button>
             </form>
-             <div class="text-center text-sm text-gray-500 dark:text-gray-400">
-                <p>Admin: admin / admin123</p>
-                <p>User: user / user123</p>
+             <div class="text-xs text-gray-500 text-center">
+                <p>Gunakan: <br> admin / admin123 <br> guru / guru123</p>
             </div>
         </div>
     </div>
 
-    <!-- Kontainer Aplikasi Peta (disembunyikan secara default) -->
-    <div id="map-app-container" class="container mx-auto p-4 sm:p-6 lg:p-8 hidden">
-        <header class="flex justify-between items-center mb-6">
-            <div>
-                 <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">Aplikasi Peta Interaktif</h1>
-                 <p id="welcome-message" class="mt-2 text-lg text-gray-600 dark:text-gray-400"></p>
+    <!-- Main App Page (Hidden by default) -->
+    <div id="appPage" class="hidden">
+        <header class="bg-gray-800 shadow-md p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                 <i class="fas fa-school text-blue-500 text-2xl"></i>
+                <h1 class="text-xl font-bold">Aplikasi Manajemen Piket</h1>
             </div>
-            <button id="logout-button" class="px-4 py-2 font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:focus:ring-offset-gray-800">
-                Keluar
-            </button>
+            <div class="flex items-center space-x-4">
+                <span id="welcomeUser" class="text-sm"></span>
+                <button id="logoutButton" class="text-gray-400 hover:text-white transition-colors duration-200">
+                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                </button>
+            </div>
         </header>
-       
-        <!-- Kontainer untuk Peta -->
-        <div id="map" class="w-full bg-white dark:bg-gray-800"></div>
+
+        <main class="p-4 md:p-6">
+            <!-- Navigation Tabs -->
+            <div class="border-b border-gray-700 mb-6">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button class="tab-link whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="dashboard">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </button>
+                    <button class="tab-link whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="rekapitulasi">
+                        <i class="fas fa-chart-bar mr-2"></i>Rekapitulasi
+                    </button>
+                    <button id="dataManagementTab" class="tab-link whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500" data-tab="data">
+                        <i class="fas fa-database mr-2"></i>Pengelolaan Data
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tabContent">
+                <!-- Dashboard Content -->
+                <div id="dashboard" class="tab-pane space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Attendance Form -->
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Input Absensi Hari Ini</h2>
+                             <p class="text-sm text-gray-400 mb-4" id="currentDate"></p>
+                            <form id="attendanceForm" class="space-y-4">
+                                <div>
+                                    <label for="studentSelect" class="block text-sm font-medium">Pilih Siswa</label>
+                                    <select id="studentSelect" required class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium">Status Kehadiran</label>
+                                    <div class="mt-2 flex flex-wrap gap-4">
+                                        <label class="inline-flex items-center"><input type="radio" name="status" value="Hadir" class="form-radio text-blue-500 bg-gray-700 border-gray-600" checked> <span class="ml-2">Hadir</span></label>
+                                        <label class="inline-flex items-center"><input type="radio" name="status" value="Sakit" class="form-radio text-blue-500 bg-gray-700 border-gray-600"> <span class="ml-2">Sakit</span></label>
+                                        <label class="inline-flex items-center"><input type="radio" name="status" value="Izin" class="form-radio text-blue-500 bg-gray-700 border-gray-600"> <span class="ml-2">Izin</span></label>
+                                        <label class="inline-flex items-center"><input type="radio" name="status" value="Alpha" class="form-radio text-blue-500 bg-gray-700 border-gray-600"> <span class="ml-2">Alpha</span></label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="notes" class="block text-sm font-medium">Keterangan (Opsional)</label>
+                                    <textarea id="notes" rows="3" class="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
+                                    Simpan Absensi
+                                </button>
+                            </form>
+                        </div>
+                        <!-- Today's Attendance -->
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Absensi Tercatat Hari Ini</h2>
+                            <div class="overflow-auto max-h-96">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3">Nama Siswa</th>
+                                            <th scope="col" class="px-4 py-3">Status</th>
+                                            <th scope="col" class="px-4 py-3">Keterangan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="todayAttendanceTable">
+                                        <!-- Data will be populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rekapitulasi Content -->
+                <div id="rekapitulasi" class="tab-pane hidden space-y-6">
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h2 class="text-xl font-semibold mb-4">Filter Laporan Absensi</h2>
+                        <div class="flex flex-wrap gap-3">
+                            <button id="rekapHarian" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Laporan Harian</button>
+                            <button id="rekapMingguan" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Laporan Mingguan</button>
+                            <button id="rekapBulanan" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md transition-colors">Laporan Bulanan</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h2 id="rekapTitle" class="text-xl font-semibold mb-4">Hasil Rekapitulasi</h2>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-300 uppercase bg-gray-700">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3">Tanggal</th>
+                                        <th scope="col" class="px-4 py-3">NIS</th>
+                                        <th scope="col" class="px-4 py-3">Nama Siswa</th>
+                                        <th scope="col" class="px-4 py-3">Kelas</th>
+                                        <th scope="col" class="px-4 py-3">Status</th>
+                                        <th scope="col" class="px-4 py-3">Keterangan</th>
+                                        <th scope="col" class="px-4 py-3">Dicatat Oleh</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="rekapTable">
+                                    <!-- Rekap data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Management Content -->
+                <div id="data" class="tab-pane hidden space-y-6">
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center"><i class="fas fa-file-import mr-3 text-green-400"></i>Import Data Siswa</h2>
+                            <p class="text-sm text-gray-400 mb-4">Upload file Excel (.xlsx) dengan kolom: <code class="bg-gray-700 px-1 rounded">nis</code>, <code class="bg-gray-700 px-1 rounded">nama</code>, dan <code class="bg-gray-700 px-1 rounded">kelas</code>.</p>
+                            <input type="file" id="importExcel" accept=".xlsx, .xls" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700"/>
+                            <div id="importStatus" class="mt-4 text-sm"></div>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center"><i class="fas fa-file-export mr-3 text-blue-400"></i>Export Data</h2>
+                            <p class="text-sm text-gray-400 mb-4">Unduh data siswa dan rekap absensi ke dalam file Excel.</p>
+                            <button id="exportExcel" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition-colors">
+                                Export ke Excel
+                            </button>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </main>
     </div>
 
-    <script>
-        const loginContainer = document.getElementById('login-container');
-        const mapAppContainer = document.getElementById('map-app-container');
-        const loginForm = document.getElementById('login-form');
-        const errorMessage = document.getElementById('error-message');
-        const logoutButton = document.getElementById('logout-button');
-        const welcomeMessage = document.getElementById('welcome-message');
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-700 text-white py-2 px-4 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+        <p id="toastMessage"></p>
+    </div>
 
-        let map = null;
 
-        // Fungsi untuk menginisialisasi peta
-        function initializeMap() {
-            // Mencegah inisialisasi ganda
-            if (map !== null) {
-                map.remove();
-            }
-            map = L.map('map').setView([-6.597146, 106.805412], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            }).addTo(map);
-            map.on('click', onMapClick);
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM Elements
+    const loginPage = document.getElementById('loginPage');
+    const appPage = document.getElementById('appPage');
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+    const logoutButton = document.getElementById('logoutButton');
+    const welcomeUser = document.getElementById('welcomeUser');
+
+    const tabs = document.querySelectorAll('.tab-link');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    const dataManagementTab = document.getElementById('dataManagementTab');
+    
+    const currentDateEl = document.getElementById('currentDate');
+    const attendanceForm = document.getElementById('attendanceForm');
+    const studentSelect = document.getElementById('studentSelect');
+    const todayAttendanceTable = document.getElementById('todayAttendanceTable');
+
+    const rekapHarianBtn = document.getElementById('rekapHarian');
+    const rekapMingguanBtn = document.getElementById('rekapMingguan');
+    const rekapBulananBtn = document.getElementById('rekapBulanan');
+    const rekapTitle = document.getElementById('rekapTitle');
+    const rekapTable = document.getElementById('rekapTable');
+
+    const importExcelInput = document.getElementById('importExcel');
+    const importStatus = document.getElementById('importStatus');
+    const exportExcelBtn = document.getElementById('exportExcel');
+    
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    // Dummy user data
+    const users = {
+        admin: { password: 'admin123', role: 'admin' },
+        guru: { password: 'guru123', role: 'user' }
+    };
+
+    // App State
+    let currentUser = null;
+
+    // --- UTILITY FUNCTIONS ---
+
+    const getTodayDateString = () => new Date().toISOString().split('T')[0];
+    
+    const showToast = (message) => {
+        toastMessage.textContent = message;
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+        setTimeout(() => {
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 3000);
+    };
+
+    // --- DATA INITIALIZATION ---
+    function initializeData() {
+        if (!localStorage.getItem('students')) {
+            const sampleStudents = [
+                { id: 1, nis: '1001', nama: 'Budi Santoso', kelas: 'X IPA 1' },
+                { id: 2, nis: '1002', nama: 'Citra Lestari', kelas: 'X IPA 1' },
+                { id: 3, nis: '1003', nama: 'Doni Firmansyah', kelas: 'X IPA 2' },
+                { id: 4, nis: '1004', nama: 'Eka Putri', kelas: 'X IPA 2' },
+            ];
+            localStorage.setItem('students', JSON.stringify(sampleStudents));
+        }
+        if (!localStorage.getItem('attendance')) {
+            localStorage.setItem('attendance', JSON.stringify([]));
+        }
+    }
+
+    // --- AUTHENTICATION ---
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const username = e.target.username.value;
+        const password = e.target.password.value;
+        const user = users[username];
+
+        if (user && user.password === password) {
+            currentUser = { username, role: user.role };
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            initializeApp();
+        } else {
+            loginError.classList.remove('hidden');
+        }
+    });
+
+    logoutButton.addEventListener('click', () => {
+        currentUser = null;
+        sessionStorage.removeItem('currentUser');
+        loginPage.classList.remove('hidden');
+        appPage.classList.add('hidden');
+    });
+    
+    function checkSession() {
+        const user = sessionStorage.getItem('currentUser');
+        if (user) {
+            currentUser = JSON.parse(user);
+            initializeApp();
+        }
+    }
+
+    // --- APP INITIALIZATION ---
+    function initializeApp() {
+        loginPage.classList.add('hidden');
+        appPage.classList.remove('hidden');
+        welcomeUser.textContent = `Selamat datang, ${currentUser.username}!`;
+        
+        // Handle admin-only features
+        if (currentUser.role !== 'admin') {
+            dataManagementTab.classList.add('hidden');
+        } else {
+            dataManagementTab.classList.remove('hidden');
         }
 
-        // Fungsi yang akan dijalankan ketika peta diklik
-        function onMapClick(e) {
-            const lat = e.latlng.lat.toFixed(5);
-            const lng = e.latlng.lng.toFixed(5);
-            
-            L.marker(e.latlng).addTo(map)
-                .bindPopup(`<b>Koordinat Lokasi</b><br>Latitude: ${lat}<br>Longitude: ${lng}`)
-                .openPopup();
+        // Set default tab
+        switchTab('dashboard');
+        
+        // Load initial data
+        loadStudents();
+        renderTodayAttendance();
+
+        // Set date on dashboard
+        if (currentDateEl) {
+           currentDateEl.textContent = `Tanggal: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
         }
+    }
 
-        // Event listener untuk form login
-        loginForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = loginForm.username.value;
-            const password = loginForm.password.value;
-            const role = loginForm.role.value;
+    // --- TAB NAVIGATION ---
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabName = tab.dataset.tab;
+            switchTab(tabName);
+        });
+    });
 
-            // Kredensial sederhana (hardcoded)
-            const isAdmin = role === 'admin' && username === 'admin' && password === 'admin123';
-            const isUser = role === 'user' && username === 'user' && password === 'user123';
-
-            if (isAdmin || isUser) {
-                // Sembunyikan halaman login dan tampilkan peta
-                loginContainer.classList.add('hidden');
-                mapAppContainer.classList.remove('hidden');
-                
-                // Set pesan selamat datang
-                const roleName = isAdmin ? 'Admin' : 'User';
-                welcomeMessage.textContent = `Selamat Datang, ${roleName}! Klik di peta untuk menambahkan penanda.`;
-
-                // Inisialisasi peta setelah login berhasil
-                initializeMap();
-                errorMessage.classList.add('hidden');
+    function switchTab(tabName) {
+        tabs.forEach(t => {
+            if (t.dataset.tab === tabName) {
+                t.classList.add('tab-active', 'border-blue-500');
+                t.classList.remove('text-gray-400', 'border-transparent');
             } else {
-                // Tampilkan pesan error jika login gagal
-                errorMessage.classList.remove('hidden');
+                t.classList.remove('tab-active', 'border-blue-500');
+                t.classList.add('text-gray-400', 'border-transparent');
             }
         });
-
-        // Event listener untuk tombol logout
-        logoutButton.addEventListener('click', function() {
-            // Sembunyikan peta dan tampilkan kembali halaman login
-            mapAppContainer.classList.add('hidden');
-            loginContainer.classList.remove('hidden');
-
-            // Reset form
-            loginForm.reset();
+        tabPanes.forEach(pane => {
+            if (pane.id === tabName) {
+                pane.classList.remove('hidden');
+            } else {
+                pane.classList.add('hidden');
+            }
         });
-    </script>
+        if(tabName === 'rekapitulasi') {
+            generateRekap('harian');
+        }
+    }
+
+    // --- DASHBOARD & ATTENDANCE ---
+    function loadStudents() {
+        const students = JSON.parse(localStorage.getItem('students')) || [];
+        studentSelect.innerHTML = '<option value="" disabled selected>-- Pilih Siswa --</option>';
+        students.sort((a, b) => a.nama.localeCompare(b.nama)).forEach(student => {
+            const option = document.createElement('option');
+            option.value = student.id;
+            option.textContent = `${student.nama} (${student.kelas})`;
+            studentSelect.appendChild(option);
+        });
+    }
+
+    attendanceForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const studentId = parseInt(studentSelect.value);
+        const status = document.querySelector('input[name="status"]:checked').value;
+        const notes = document.getElementById('notes').value;
+        const date = getTodayDateString();
+
+        if (!studentId) {
+            showToast('Silakan pilih siswa terlebih dahulu.');
+            return;
+        }
+
+        let attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+        
+        // Check if attendance for this student on this day already exists
+        const existingIndex = attendance.findIndex(att => att.studentId === studentId && att.date === date);
+
+        if (existingIndex > -1) {
+            // Update existing record
+            attendance[existingIndex] = { ...attendance[existingIndex], status, notes, recordedBy: currentUser.username };
+             showToast('Data absensi berhasil diperbarui.');
+        } else {
+            // Add new record
+            const newRecord = {
+                id: Date.now(),
+                studentId,
+                date,
+                status,
+                notes,
+                recordedBy: currentUser.username
+            };
+            attendance.push(newRecord);
+            showToast('Absensi berhasil disimpan.');
+        }
+
+        localStorage.setItem('attendance', JSON.stringify(attendance));
+        attendanceForm.reset();
+        renderTodayAttendance();
+    });
+
+    function renderTodayAttendance() {
+        const students = JSON.parse(localStorage.getItem('students')) || [];
+        const attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+        const today = getTodayDateString();
+
+        const todayRecords = attendance.filter(att => att.date === today);
+
+        todayAttendanceTable.innerHTML = '';
+        if(todayRecords.length === 0) {
+            todayAttendanceTable.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-gray-500">Belum ada data absensi hari ini.</td></tr>`;
+            return;
+        }
+
+        todayRecords.forEach(record => {
+            const student = students.find(s => s.id === record.studentId);
+            if (student) {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-gray-700 hover:bg-gray-700/50";
+                tr.innerHTML = `
+                    <td class="px-4 py-3">${student.nama}</td>
+                    <td class="px-4 py-3">${record.status}</td>
+                    <td class="px-4 py-3 text-gray-400">${record.notes || '-'}</td>
+                `;
+                todayAttendanceTable.appendChild(tr);
+            }
+        });
+    }
+
+    // --- REKAPITULASI ---
+    rekapHarianBtn.addEventListener('click', () => generateRekap('harian'));
+    rekapMingguanBtn.addEventListener('click', () => generateRekap('mingguan'));
+    rekapBulananBtn.addEventListener('click', () => generateRekap('bulanan'));
+
+    function generateRekap(period) {
+        const students = JSON.parse(localStorage.getItem('students')) || [];
+        const attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+        
+        const now = new Date();
+        let startDate;
+
+        switch (period) {
+            case 'harian':
+                rekapTitle.textContent = 'Rekapitulasi Harian';
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                break;
+            case 'mingguan':
+                rekapTitle.textContent = 'Rekapitulasi Mingguan';
+                const dayOfWeek = now.getDay();
+                startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek);
+                break;
+            case 'bulanan':
+                rekapTitle.textContent = 'Rekapitulasi Bulanan';
+                startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                break;
+        }
+        
+        const filteredAttendance = attendance.filter(att => new Date(att.date) >= startDate);
+        
+        renderRekapTable(filteredAttendance, students);
+    }
+    
+    function renderRekapTable(data, students) {
+        rekapTable.innerHTML = '';
+        if (data.length === 0) {
+            rekapTable.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">Tidak ada data untuk periode ini.</td></tr>`;
+            return;
+        }
+
+        data.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(record => {
+            const student = students.find(s => s.id === record.studentId);
+            if (student) {
+                const tr = document.createElement('tr');
+                 tr.className = "border-b border-gray-700 hover:bg-gray-700/50";
+                tr.innerHTML = `
+                    <td class="px-4 py-3">${new Date(record.date).toLocaleDateString('id-ID')}</td>
+                    <td class="px-4 py-3">${student.nis}</td>
+                    <td class="px-4 py-3 font-medium">${student.nama}</td>
+                    <td class="px-4 py-3">${student.kelas}</td>
+                    <td class="px-4 py-3">${record.status}</td>
+                    <td class="px-4 py-3 text-gray-400">${record.notes || '-'}</td>
+                    <td class="px-4 py-3">${record.recordedBy}</td>
+                `;
+                rekapTable.appendChild(tr);
+            }
+        });
+    }
+
+
+    // --- DATA MANAGEMENT (Excel Import/Export) ---
+    importExcelInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        importStatus.textContent = 'Membaca file...';
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                if (json.length > 0 && 'nis' in json[0] && 'nama' in json[0] && 'kelas' in json[0]) {
+                    const newStudents = json.map((row, index) => ({
+                        id: Date.now() + index, // Generate unique ID
+                        nis: String(row.nis),
+                        nama: String(row.nama),
+                        kelas: String(row.kelas)
+                    }));
+                    localStorage.setItem('students', JSON.stringify(newStudents));
+                    importStatus.textContent = `Berhasil mengimpor ${newStudents.length} data siswa.`;
+                    importStatus.className = 'mt-4 text-sm text-green-400';
+                    loadStudents(); // Refresh student list
+                    showToast('Data siswa berhasil diimpor.');
+                } else {
+                    throw new Error('Format kolom tidak sesuai. Pastikan ada kolom nis, nama, dan kelas.');
+                }
+            } catch (error) {
+                importStatus.textContent = `Gagal mengimpor: ${error.message}`;
+                importStatus.className = 'mt-4 text-sm text-red-400';
+                showToast('Gagal mengimpor data.');
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    exportExcelBtn.addEventListener('click', () => {
+        try {
+            const students = JSON.parse(localStorage.getItem('students')) || [];
+            const attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+            
+            // Prepare student data for export (remove id)
+            const studentsToExport = students.map(({id, ...rest}) => rest);
+            
+            // Prepare attendance data for export (join with student info)
+            const attendanceToExport = attendance.map(att => {
+                const student = students.find(s => s.id === att.studentId);
+                return {
+                    tanggal: att.date,
+                    nis: student ? student.nis : 'N/A',
+                    nama: student ? student.nama : 'N/A',
+                    kelas: student ? student.kelas : 'N/A',
+                    status: att.status,
+                    keterangan: att.notes,
+                    dicatat_oleh: att.recordedBy,
+                };
+            }).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
+
+            const studentSheet = XLSX.utils.json_to_sheet(studentsToExport);
+            const attendanceSheet = XLSX.utils.json_to_sheet(attendanceToExport);
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, studentSheet, 'Daftar Siswa');
+            XLSX.utils.book_append_sheet(workbook, attendanceSheet, 'Data Absensi');
+
+            XLSX.writeFile(workbook, `Data_Absensi_Sekolah_${getTodayDateString()}.xlsx`);
+            showToast('Data berhasil diexport.');
+        } catch (error) {
+            console.error('Export failed:', error);
+            showToast('Gagal mengexport data.');
+        }
+    });
+
+    // --- INITIAL LOAD ---
+    initializeData();
+    checkSession();
+});
+</script>
 
 </body>
 </html>
